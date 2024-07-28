@@ -1,0 +1,322 @@
+<html><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jesus Paid It All - Receipt Generator</title>
+<style>
+  body {
+    font-family: 'Courier New', monospace;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    background-color: #f0f0f0;
+    padding: 20px;
+  }
+  .receipt {
+    background-color: white;
+    padding: 20px;
+    border: 1px solid #ccc;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    width: 300px;
+    margin-bottom: 20px;
+  }
+  h1 {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+  }
+  .divider {
+    border-top: 1px dashed #000;
+    margin: 10px 0;
+  }
+  .total {
+    font-weight: bold;
+  }
+  #customItems {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 300px;
+  }
+  input, button, textarea {
+    margin-bottom: 10px;
+  }
+  .item input {
+    font-family: inherit;
+    font-size: inherit;
+    border: none;
+    background: transparent;
+  }
+  .item input:first-child {
+    width: 70%;
+    text-align: left;
+  }
+  .item input:last-of-type {
+    width: 25%;
+    text-align: right;
+  }
+  .delete-btn {
+    cursor: pointer;
+    color: red;
+    margin-left: 5px;
+  }
+  #receiptTitle {
+    width: 100%;
+    text-align: center;
+    font-size: 1.5em;
+    font-weight: bold;
+    border: none;
+    background: transparent;
+    margin-bottom: 15px;
+  }
+  #comment1 {
+    width: 100%;
+    text-align: left;
+    font-family: inherit;
+    font-size: inherit;
+    border: none;
+    background: transparent;
+    resize: vertical;
+    min-height: 100px;
+  }
+  #comment2 {
+    width: 100%;
+    text-align: left;
+    font-family: inherit;
+    font-size: inherit;
+    border: none;
+    background: transparent;
+    resize: vertical;
+    min-height: 100px;
+  }
+  #creditCardInfo {
+    width: 100%;
+    text-align: left;
+    font-family: inherit;
+    font-size: 0.8em;
+    border: none;
+    background: transparent;
+  }
+  .action-buttons {
+    display: flex;
+    justify-content: space-between;
+    width: 300px;
+    margin-top: 20px;
+  }
+  .action-buttons button {
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+  }
+  #customItems input {
+    width: 100%;
+    padding: 5px;
+    margin-bottom: 10px;
+  }
+  #customItems button {
+    width: 100%;
+    padding: 10px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    cursor: pointer;
+  }
+  #customItems button:hover {
+    background-color: #45a049;
+  }
+  @media print {
+    @page {
+      size: 55mm auto;
+      margin: 0;
+    }
+    body * {
+      visibility: hidden;
+    }
+    .receipt, .receipt * {
+      visibility: visible;
+    }
+    .receipt {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 55mm;
+      padding: 5mm;
+      box-shadow: none;
+      border: none;
+    }
+    .delete-btn {
+      display: none;
+    }
+    #receiptTitle {
+      font-size: 1.2em;
+    }
+    .item, #comment1 {
+      font-size: 0.8em;
+    }
+    .item, #comment2 {
+      font-size: 0.8em;
+    }
+    #creditCardInfo {
+      font-size: 0.7em;
+    }
+  }
+</style>
+<script type="text/javascript" nonce="3ef5692b142a4420908a6375302" src="//local.adguard.org?ts=1721928253771&amp;type=content-script&amp;dmn=party.websim.ai&amp;url=https%3A%2F%2Fparty.websim.ai%2Fapi%2Fv1%2Fsites%2FhjO79iYU6khQptHnN%2Fhtml%3Fraw%3Dtrue&amp;app=com.google.Chrome&amp;css=3&amp;js=1&amp;rel=1&amp;rji=1&amp;sbe=1"></script>
+<script type="text/javascript" nonce="3ef5692b142a4420908a6375302" src="//local.adguard.org?ts=1721928253771&amp;name=AdGuard%20Assistant&amp;name=AdGuard%20Extra&amp;type=user-script"></script></head>
+<body>
+  <div id="customItems">
+    <input type="text" id="itemName" placeholder="Item name">
+    <input type="text" id="itemValue" placeholder="Item value (PAID)">
+    <button onclick="addItem()">Add Item</button>
+  </div>
+
+  <div class="receipt">
+    <input type="text" id="receiptTitle" value="My Business" onchange="updateTitle()">
+    <textarea id="comment1" rows="1">This is the address area</textarea>
+    <div id="items"></div>
+    <div class="divider"></div>
+    <div class="item total">
+      <span>AMOUNT DUE</span>
+      <span id="amountDue">0.00</span>
+    </div>
+    <div class="item">
+      <span>TIPS</span>
+      <input type="number" id="tipAmount" placeholder="Enter tip amount" onchange="calculateTotals()">
+    </div>
+    <div class="item">
+      <span>AMOUNT PAID</span>
+      <input type="number" id="amountPaid" placeholder="Enter amount paid" onchange="calculateChange()">
+    </div>
+    <div class="item total">
+      <span>CHANGE</span>
+      <span id="change">0.00</span>
+    </div>
+    <div class="divider"></div>
+    <div class="item total">
+      <span>Subtotal</span>
+      <span id="subtotal">0.00</span>
+    </div>
+    <div class="item total">
+      <span>GRAND TOTAL</span>
+      <span id="grandTotal">0.00</span>
+    </div>
+    <div class="divider"></div>
+    <input type="text" id="creditCardInfo" value="************ 0000 XX/XX" placeholder="Credit Card Info">
+    <div class="divider"></div>
+    <textarea id="comment2" rows="1">This is the comment area</textarea>
+  </div>
+
+  <div class="action-buttons">
+    <button onclick="clearReceipt()">Clear</button>
+    <button onclick="printReceipt()">Print</button>
+  </div>
+
+  <script>
+    let items = [
+      { name: "item1", value: "0.00" },
+      { name: "item2", value: "0.00" },
+      { name: "item3", value: "0.00" },
+      { name: "item4", value: "0.00" },
+      { name: "item5", value: "0.00" },
+      { name: "item6", value: "0.00" },
+      { name: "item7", value: "0.00" }
+    ];
+
+    function renderItems() {
+      const itemsContainer = document.getElementById('items');
+      itemsContainer.innerHTML = '';
+      items.forEach((item, index) => {
+        const div = document.createElement('div');
+        div.className = 'item';
+        div.innerHTML = `
+          <input type="text" value="${item.name}" onchange="updateItem(${index}, 'name', this.value)">
+          <input type="text" value="${item.value}" onchange="updateItem(${index}, 'value', this.value)">
+          <span class="delete-btn" onclick="deleteItem(${index})">×</span>
+        `;
+        itemsContainer.appendChild(div);
+      });
+      calculateTotals();
+    }
+
+    function addItem() {
+      const name = document.getElementById('itemName').value;
+      const value = document.getElementById('itemValue').value || "PAID";
+      if (name) {
+        items.push({ name, value });
+        renderItems();
+        document.getElementById('itemName').value = '';
+        document.getElementById('itemValue').value = '';
+      }
+    }
+
+    function updateItem(index, field, value) {
+      items[index][field] = value;
+      calculateTotals();
+    }
+
+    function deleteItem(index) {
+      items.splice(index, 1);
+      renderItems();
+    }
+
+    function calculateTotals() {
+      const total = items.reduce((sum, item) => {
+        return sum + (item.value === "PAID" ? 0 : parseFloat(item.value) || 0);
+      }, 0);
+      
+      const tipAmount = parseFloat(document.getElementById('tipAmount').value) || 0;
+      const grandTotal = total + tipAmount;
+      
+      document.getElementById('amountDue').textContent = total.toFixed(2);
+      document.getElementById('subtotal').textContent = total.toFixed(2);
+      document.getElementById('grandTotal').textContent = grandTotal.toFixed(2);
+      calculateChange();
+    }
+
+    function calculateChange() {
+      const grandTotal = parseFloat(document.getElementById('grandTotal').textContent);
+      const amountPaid = parseFloat(document.getElementById('amountPaid').value) || 0;
+      const change = amountPaid - grandTotal;
+      document.getElementById('change').textContent = change.toFixed(2);
+    }
+
+    function updateTitle() {
+      const title = document.getElementById('receiptTitle').value;
+      document.title = title + " - Receipt Generator";
+    }
+
+    function clearReceipt() {
+      items = [
+      { name: "item1", value: "0.00" },
+      { name: "item2", value: "0.00" },
+      { name: "item3", value: "0.00" },
+      { name: "item4", value: "0.00" },
+      { name: "item5", value: "0.00" },
+      { name: "item6", value: "0.00" },
+      { name: "item7", value: "0.00" }
+      ];
+      document.getElementById('receiptTitle').value = "My Business";
+      document.getElementById('tipAmount').value = "";
+      document.getElementById('amountPaid').value = "";
+      document.getElementById('creditCardInfo').value = "************ 0000 XX/XX";
+      document.getElementById('comment1').value = `this is the address area`;
+      document.getElementById('comment2').value = `this is the comment area`
+      renderItems();
+      updateTitle();
+    }
+
+    function printReceipt() {
+      window.print();
+    }
+
+    renderItems();
+  </script>
+
+</body></html>
